@@ -1,0 +1,266 @@
+Time(s) | Temp   |  TDS   | Turbidity [V]       | MSE       | Verdict         | Conf | Reason
+--------|--------|--------|---------------------|-----------|-----------------|------|-------------------------------
+
+✓ All systems ready. Context-Aware Edge AI active.
+
+    3  |   25.8C  |     1ppm  |    223NTU [2.721V]  |  MSE: 15.226  |   ALERT !!!   Conf: 90%  |  Contamination detected
+ [☁️ ] Cloud Push OK: 200
+    6  |   25.8C  |     1ppm  |    235NTU [2.711V]  |  MSE: 17.226  |   ALERT !!!   Conf: 90%  |  Contamination detected
+ [☁️ ] Cloud Push OK: 200
+    9  |   25.8C  |     1ppm  |    317NTU [2.646V]  |  MSE: 34.232  |   ALERT !!!   Conf:100%  |  Contamination detected
+ [☁️ ] Cloud Push OK: 200
+   12  |   25.8C  |     1ppm  |    239NTU [2.708V]  |  MSE: 17.872  |   ALERT !!!   Conf:100%  |  Contamination detected
+ [☁️ ] Cloud Push OK: 200
+   15  |   25.8C  |   201ppm  |    204NTU [2.736V]  |  MSE:  3.137  |   CAUTION !   Conf: 38%  |  Turbidity anomaly only
+ [☁️ ] Cloud Push OK: 200
+   18  |   25.8C  |   203ppm  |      0NTU [3.280V]  |  MSE:  0.457  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   21  |   25.9C  |   207ppm  |      0NTU [3.281V]  |  MSE:  0.454  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   24  |   25.9C  |   207ppm  |      0NTU [3.290V]  |  MSE:  0.453  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   27  |   25.9C  |   207ppm  |      0NTU [3.271V]  |  MSE:  0.442  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   30  |   25.9C  |   203ppm  |      0NTU [3.282V]  |  MSE:  0.433  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   33  |   25.9C  |   204ppm  |      0NTU [3.284V]  |  MSE:  0.435  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   36  |   26.0C  |   204ppm  |      0NTU [3.279V]  |  MSE:  0.421  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   39  |   26.0C  |   205ppm  |      0NTU [3.291V]  |  MSE:  0.424  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   42  |   26.0C  |   205ppm  |      0NTU [3.298V]  |  MSE:  0.424  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   45  |   26.0C  |   205ppm  |      0NTU [3.283V]  |  MSE:  0.424  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   48  |   26.0C  |   205ppm  |      0NTU [3.314V]  |  MSE:  0.425  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   51  |   26.1C  |   205ppm  |      0NTU [3.310V]  |  MSE:  0.413  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   54  |   26.1C  |   205ppm  |      0NTU [3.325V]  |  MSE:  0.413  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   57  |   26.1C  |   205ppm  |      0NTU [3.324V]  |  MSE:  0.413  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   61  |   26.1C  |   205ppm  |      0NTU [3.314V]  |  MSE:  0.414  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   64  |   26.1C  |   205ppm  |      0NTU [3.331V]  |  MSE:  0.414  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   67  |   26.1C  |   206ppm  |      0NTU [3.324V]  |  MSE:  0.414  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   70  |   26.1C  |   206ppm  |      0NTU [3.284V]  |  MSE:  0.415  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   73  |   26.1C  |   205ppm  |      0NTU [3.323V]  |  MSE:  0.403  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   76  |   26.1C  |   206ppm  |      0NTU [3.334V]  |  MSE:  0.403  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   79  |   26.1C  |   206ppm  |      0NTU [3.333V]  |  MSE:  0.403  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   82  |   26.1C  |   206ppm  |      0NTU [3.314V]  |  MSE:  0.403  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   85  |   26.1C  |   206ppm  |      0NTU [3.338V]  |  MSE:  0.404  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   88  |   26.1C  |   206ppm  |      0NTU [3.328V]  |  MSE:  0.404  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   91  |   26.1C  |   206ppm  |      0NTU [3.339V]  |  MSE:  0.404  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   94  |   26.1C  |   206ppm  |      0NTU [3.326V]  |  MSE:  0.404  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+   97  |   26.1C  |   206ppm  |      0NTU [3.336V]  |  MSE:  0.404  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  101  |   26.1C  |   206ppm  |      0NTU [3.338V]  |  MSE:  0.404  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  104  |   26.1C  |   206ppm  |      0NTU [3.346V]  |  MSE:  0.404  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  107  |   26.1C  |   206ppm  |      0NTU [3.333V]  |  MSE:  0.405  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  110  |   26.1C  |   206ppm  |      0NTU [3.342V]  |  MSE:  0.405  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  113  |   26.1C  |   206ppm  |      0NTU [3.299V]  |  MSE:  0.405  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push Error: -1
+  119  |   26.1C  |   206ppm  |      0NTU [3.340V]  |  MSE:  0.405  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  124  |   26.1C  |   206ppm  |      0NTU [3.342V]  |  MSE:  0.405  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  127  |   26.1C  |   207ppm  |      0NTU [3.345V]  |  MSE:  0.405  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  130  |   26.1C  |   207ppm  |      0NTU [3.350V]  |  MSE:  0.405  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  133  |   26.1C  |   207ppm  |      0NTU [3.344V]  |  MSE:  0.405  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  136  |   26.1C  |   207ppm  |      0NTU [3.349V]  |  MSE:  0.406  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  139  |   26.1C  |   207ppm  |      0NTU [3.331V]  |  MSE:  0.406  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  142  |   26.1C  |   207ppm  |      0NTU [3.346V]  |  MSE:  0.406  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  145  |   26.1C  |   207ppm  |      0NTU [3.296V]  |  MSE:  0.406  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+V]  |  MSE:  0.406  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  154  |   26.1C  |   207ppm  |      0NTU [3.343V]  |  MSE:  0.406  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  157  |   26.1C  |   207ppm  |      0NTU [3.341V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  160  |   26.1C  |   207ppm  |      0NTU [3.349V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  163  |   26.1C  |   207ppm  |      0NTU [3.330V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  166  |   26.1C  |   207ppm  |      0NTU [3.347V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  169  |   26.1C  |   207ppm  |      0NTU [3.343V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  172  |   26.2C  |   207ppm  |      0NTU [3.349V]  |  MSE:  0.395  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  175  |   26.1C  |   207ppm  |      0NTU [3.327V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  178  |   26.1C  |   207ppm  |      0NTU [3.348V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  181  |   26.1C  |   207ppm  |      0NTU [3.345V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  184  |   26.1C  |   207ppm  |      0NTU [3.350V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  187  |   26.1C  |   207ppm  |      0NTU [3.347V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  190  |   26.1C  |   207ppm  |      0NTU [3.350V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  193  |   26.1C  |   207ppm  |      0NTU [3.346V]  |  MSE:  0.407  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  196  |   26.1C  |   207ppm  |      0NTU [3.351V]  |  MSE:  0.408  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  199  |   26.1C  |   207ppm  |      0NTU [3.327V]  |  MSE:  0.408  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  202  |   26.2C  |   207ppm  |      0NTU [3.347V]  |  MSE:  0.395  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  205  |   26.2C  |   207ppm  |      0NTU [3.348V]  |  MSE:  0.395  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  208  |   26.2C  |   207ppm  |      0NTU [3.355V]  |  MSE:  0.395  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  211  |   26.2C  |   207ppm  |      0NTU [3.332V]  |  MSE:  0.395  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  214  |   26.2C  |   207ppm  |      0NTU [3.349V]  |  MSE:  0.396  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  217  |   26.2C  |   207ppm  |      0NTU [3.346V]  |  MSE:  0.396  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  222  |   26.1C  |   206ppm  |      0NTU [3.347V]  |  MSE:  0.404  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push Error: -11
+  228  |   26.1C  |   206ppm  |      0NTU [3.304V]  |  MSE:  0.404  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  232  |   26.0C  |   207ppm  |      0NTU [3.376V]  |  MSE:  0.430  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  240  |   25.8C  |   208ppm  |      0NTU [3.448V]  |  MSE:  0.484  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  243  |   25.6C  |   209ppm  |      0NTU [3.515V]  |  MSE:  0.511  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  246  |   25.5C  |   210ppm  |      0NTU [3.345V]  |  MSE:  0.540  |  [UNCERT]     Conf: 15%  |  Possible sensor artifact
+ [☁️ ] Cloud Push OK: 200
+  249  |   25.4C  |   210ppm  |    628NTU [2.397V]  |  MSE:108.428  |   WARNING !!  Conf: 77%  |  Turbidity anomaly only
+ [☁️ ] Cloud Push OK: 200
+  252  |   25.4C  |   210ppm  |      0NTU [3.716V]  |  MSE:  0.570  |   CAUTION !   Conf: 46%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  255  |   25.4C  |   210ppm  |      0NTU [3.695V]  |  MSE:  0.569  |  [UNCERT]     Conf: 12%  |  Possible sensor artifact
+ [☁️ ] Cloud Push OK: 200
+  258  |   25.4C  |   210ppm  |      0NTU [3.663V]  |  MSE:  0.569  |  [UNCERT]     Conf: 12%  |  Possible sensor artifact
+ [☁️ ] Cloud Push OK: 200
+  261  |   25.4C  |   211ppm  |      0NTU [3.677V]  |  MSE:  0.570  |  [UNCERT]     Conf: 12%  |  Possible sensor artifact
+ [☁️ ] Cloud Push OK: 200
+  264  |   25.4C  |   211ppm  |      0NTU [3.671V]  |  MSE:  0.570  |  [UNCERT]     Conf: 27%  |  Possible sensor artifact
+ [☁️ ] Cloud Push OK: 200
+  267  |   25.4C  |   211ppm  |      0NTU [3.652V]  |  MSE:  0.570  |  [UNCERT]     Conf: 27%  |  Possible sensor artifact
+ [☁️ ] Cloud Push OK: 200
+  270  |   25.4C  |   211ppm  |      0NTU [3.675V]  |  MSE:  0.570  |  [UNCERT]     Conf: 27%  |  Possible sensor artifact
+ [☁️ ] Cloud Push OK: 200
+  273  |   25.4C  |   211ppm  |      0NTU [3.659V]  |  MSE:  0.570  |   CAUTION !   Conf: 35%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  276  |   25.4C  |   210ppm  |      0NTU [3.632V]  |  MSE:  0.556  |   CAUTION !   Conf: 34%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  279  |   25.4C  |   210ppm  |      0NTU [3.661V]  |  MSE:  0.556  |   CAUTION !   Conf: 34%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  282  |   25.4C  |   210ppm  |      0NTU [3.661V]  |  MSE:  0.556  |   CAUTION !   Conf: 34%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  285  |   25.4C  |   211ppm  |      0NTU [3.664V]  |  MSE:  0.570  |   CAUTION !   Conf: 35%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  288  |   25.4C  |   210ppm  |      0NTU [3.657V]  |  MSE:  0.556  |   CAUTION !   Conf: 34%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  291  |   25.4C  |   210ppm  |      0NTU [3.647V]  |  MSE:  0.556  |   CAUTION !   Conf: 34%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  294  |   25.4C  |   210ppm  |      0NTU [3.671V]  |  MSE:  0.556  |   CAUTION !   Conf: 34%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  297  |   25.4C  |   211ppm  |      0NTU [3.631V]  |  MSE:  0.556  |   CAUTION !   Conf: 34%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  300  |   25.5C  |   210ppm  |      0NTU [3.639V]  |  MSE:  0.542  |   CAUTION !   Conf: 34%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  303  |   25.6C  |   212ppm  |      0NTU [3.431V]  |  MSE:  0.534  |   CAUTION !   Conf: 34%  |  Temperature deviation
+ [☁️ ] Cloud Push OK: 200
+  306  |   25.7C  |   210ppm  |      0NTU [3.319V]  |  MSE:  0.501  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  309  |   25.9C  |   209ppm  |      0NTU [3.333V]  |  MSE:  0.460  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  312  |   26.0C  |   209ppm  |      0NTU [3.338V]  |  MSE:  0.437  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  315  |   26.1C  |   208ppm  |      0NTU [3.322V]  |  MSE:  0.410  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  318  |   26.2C  |   208ppm  |      0NTU [3.350V]  |  MSE:  0.385  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  321  |   26.3C  |   207ppm  |      0NTU [3.345V]  |  MSE:  0.373  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  324  |   26.3C  |   207ppm  |      0NTU [3.357V]  |  MSE:  0.373  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  327  |   26.4C  |   207ppm  |      0NTU [3.345V]  |  MSE:  0.362  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  330  |   26.4C  |   207ppm  |      0NTU [3.352V]  |  MSE:  0.350  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  333  |   26.5C  |   207ppm  |      0NTU [3.355V]  |  MSE:  0.339  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  336  |   26.5C  |   207ppm  |      0NTU [3.336V]  |  MSE:  0.339  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  339  |   26.5C  |   207ppm  |      0NTU [3.353V]  |  MSE:  0.339  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  342  |   26.6C  |   207ppm  |      0NTU [3.358V]  |  MSE:  0.328  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  345  |   26.6C  |   207ppm  |      0NTU [3.351V]  |  MSE:  0.328  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  348  |   26.5C  |   208ppm  |      0NTU [3.340V]  |  MSE:  0.342  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  351  |   26.6C  |   207ppm  |   3000NTU [0.079V]  |  MSE:4540.212  |   WARNING !!  Conf: 65%  |  Turbidity anomaly only
+ [☁️ ] Cloud Push OK: 200
+  354  |   26.5C  |   208ppm  |    129NTU [2.796V]  |  MSE:  0.311  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  357  |   26.6C  |   209ppm  |    979NTU [2.116V]  |  MSE:380.157  |  [UNCERT]     Conf: 17%  |  Possible sensor artifact
+ [☁️ ] Cloud Push OK: 200
+  360  |   26.6C  |   206ppm  |   1533NTU [1.673V]  |  MSE:1062.396  |   CAUTION !   Conf: 31%  |  Turbidity anomaly only
+ [☁️ ] Cloud Push OK: 200
+  363  |   26.6C  |   207ppm  |      0NTU [3.318V]  |  MSE:  0.328  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  366  |   26.6C  |   207ppm  |      0NTU [3.480V]  |  MSE:  0.319  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  369  |   26.6C  |   210ppm  |      0NTU [3.332V]  |  MSE:  0.335  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  372  |   26.6C  |   208ppm  |      0NTU [3.431V]  |  MSE:  0.321  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  375  |   26.6C  |   208ppm  |      0NTU [3.430V]  |  MSE:  0.321  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  378  |   26.6C  |   208ppm  |      0NTU [3.437V]  |  MSE:  0.321  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  381  |   26.6C  |   208ppm  |      0NTU [3.451V]  |  MSE:  0.322  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  384  |   26.6C  |   208ppm  |      0NTU [3.456V]  |  MSE:  0.322  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  387  |   26.6C  |   208ppm  |      0NTU [3.435V]  |  MSE:  0.322  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  390  |   26.6C  |   208ppm  |      0NTU [3.451V]  |  MSE:  0.322  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push Error: -11
+  396  |   26.6C  |   208ppm  |      0NTU [3.454V]  |  MSE:  0.322  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  417  |   26.6C  |   208ppm  |      0NTU [3.479V]  |  MSE:  0.322  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  420  |   26.7C  |   208ppm  |      0NTU [3.599V]  |  MSE:  0.310  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  423  |   26.6C  |   208ppm  |      0NTU [3.617V]  |  MSE:  0.321  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  426  |   26.6C  |   208ppm  |      0NTU [3.608V]  |  MSE:  0.321  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  429  |   26.6C  |   208ppm  |      0NTU [3.616V]  |  MSE:  0.321  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 200
+  432  |   26.6C  |   208ppm  |      0NTU [3.606V]  |  MSE:  0.332  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+ [☁️ ] Cloud Push OK: 2 0

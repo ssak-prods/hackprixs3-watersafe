@@ -1,0 +1,45 @@
+Time(s) | Temp   |  TDS   | Turbidity [V]       | MSE       | Verdict         | Conf | Reason
+--------|--------|--------|---------------------|-----------|-----------------|------|-------------------------------
+
+✓ System boot. Context thresholds v0.4.
+
+    3  |  25.5C  |   205ppm  |      0NTU [3.285V]  |  MSE:  0.756  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+    6  |  25.4C  |   205ppm  |      0NTU [3.252V]  |  MSE:  1.220  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+    9  |  25.4C  |   205ppm  |      0NTU [3.210V]  |  MSE:  1.275  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   12  |  25.4C  |   205ppm  |      0NTU [3.282V]  |  MSE:  1.385  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   15  |  25.3C  |   205ppm  |      0NTU [3.228V]  |  MSE:  1.696  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   18  |  25.2C  |   205ppm  |      0NTU [3.241V]  |  MSE:  3.350  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   21  |  25.2C  |   205ppm  |      0NTU [3.208V]  |  MSE:  3.401  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   24  |  25.1C  |   205ppm  |      0NTU [3.300V]  |  MSE:  3.107  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   27  |  25.1C  |   205ppm  |      0NTU [3.261V]  |  MSE:  3.463  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   30  |  25.1C  |   205ppm  |      0NTU [3.287V]  |  MSE:  3.166  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   33  |  25.0C  |   205ppm  |      0NTU [3.229V]  |  MSE:  2.197  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   36  |  24.9C  |   205ppm  |      0NTU [3.235V]  |  MSE:  1.207  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   39  |  24.9C  |   205ppm  |      0NTU [3.213V]  |  MSE:  0.523  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   42  |  24.9C  |   205ppm  |      0NTU [3.275V]  |  MSE:  2.766  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   45  |  24.8C  |   205ppm  |      0NTU [3.270V]  |  MSE:  1.626  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   48  |  24.8C  |   205ppm  |      0NTU [3.238V]  |  MSE:  2.590  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   51  |  24.7C  |   205ppm  |      0NTU [3.222V]  |  MSE:  1.657  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   54  |  24.6C  |   205ppm  |      0NTU [3.231V]  |  MSE:  1.633  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   57  |  24.6C  |   205ppm  |      0NTU [3.286V]  |  MSE:  2.634  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   60  |  24.6C  |   205ppm  |      0NTU [3.292V]  |  MSE:  2.322  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   63  |  24.5C  |   205ppm  |      0NTU [3.227V]  |  MSE:  0.920  |  [NORMAL]     Conf:  0%  |  All parameters nominal
+   66  |  24.4C  |   205ppm  |      0NTU [3.295V]  |  MSE:  1.221  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   69  |  24.4C  |   205ppm  |      0NTU [3.236V]  |  MSE:  3.287  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   72  |  24.4C  |   205ppm  |      0NTU [3.231V]  |  MSE:  2.290  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   75  |  24.3C  |   205ppm  |      0NTU [3.266V]  |  MSE:  1.761  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   78  |  24.2C  |   205ppm  |      0NTU [3.282V]  |  MSE:  1.696  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   81  |  24.2C  |   205ppm  |      0NTU [3.259V]  |  MSE:  2.231  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   84  |  24.1C  |   205ppm  |      0NTU [3.271V]  |  MSE:  0.506  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   87  |  24.1C  |   205ppm  |      0NTU [3.243V]  |  MSE:  0.795  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   90  |  24.1C  |   205ppm  |      0NTU [3.253V]  |  MSE:  2.835  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   93  |  24.0C  |   205ppm  |      0NTU [3.259V]  |  MSE:  3.125  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   96  |  23.9C  |   205ppm  |      0NTU [3.275V]  |  MSE:  2.135  |   CAUTION !   Conf: 55%  |  Temperature deviation
+   99  |  23.9C  |   205ppm  |      0NTU [3.261V]  |  MSE:  0.514  |   CAUTION !   Conf: 55%  |  Temperature deviation
+  102  |  23.9C  |   205ppm  |      0NTU [3.207V]  |  MSE:  2.328  |   CAUTION !   Conf: 55%  |  Temperature deviation
+  105  |  23.8C  |   205ppm  |      0NTU [3.258V]  |  MSE:  1.405  |   CAUTION !   Conf: 55%  |  Temperature deviation
+  108  |  23.8C  |   205ppm  |      0NTU [3.288V]  |  MSE:  2.880  |   CAUTION !   Conf: 55%  |  Temperature deviation
+  111  |  23.7C  |   205ppm  |      0NTU [3.242V]  |  MSE:  1.211  |   CAUTION !   Conf: 55%  |  Temperature deviation
+  114  |  23.6C  |   205ppm  |      0NTU [3.280V]  |  MSE:  0.930  |   CAUTION !   Conf: 55%  |  Temperature deviation
+  117  |  23.6C  |   205ppm  |      0NTU [3.212V]  |  MSE:  3.394  |   CAUTION !   Conf: 55%  |  Temperature deviation
+  120  |  23.6C  |   205ppm  |      0NTU [3.214V]  |  MSE:  1.230  |   CAUTION !   Conf: 55%  |  Temperature deviation

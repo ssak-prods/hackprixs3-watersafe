@@ -14,7 +14,7 @@
 The central hypothesis of WaterSafe V2 is that **water contamination is a statistical outlier** in the natural electrochemical baseline of a water source. Instead of detecting specific chemicals (which requires industrial-grade probes), we model the "Latent Space of Potability."
 
 ### The Anomaly Detection Math
-We use a symmetric **Bottleneck Autoencoder** trained exclusively on "Normal" water samples. The reconstruction loss $\mathcal{L}$ for an input vector $x = [pH, TDS, Turbidity, Temp]$ is:
+We use a symmetric **Bottleneck Autoencoder** trained exclusively on "Normal" water samples. The reconstruction loss $\mathcal{L}$ for an input vector $x = [TDS, Turbidity, Temp]$ is:
 
 $$\mathcal{L}(x, \hat{x}) = \frac{1}{n} \sum_{i=1}^{n} (x_i - \hat{x}_i)^2$$
 

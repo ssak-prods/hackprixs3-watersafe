@@ -14,8 +14,8 @@ ONNX_PATH = "ml/autoencoder.onnx"
 INPUT_DIM = 4
 HIDDEN_DIM = 8
 BOTTLENECK_DIM = 2
-EPOCHS = 50
-BATCH_SIZE = 32
+EPOCHS = 1000
+BATCH_SIZE = 256
 LEARNING_RATE = 1e-3
 
 # 1. Define the Autoencoder Model
@@ -26,8 +26,8 @@ class WaterQualityAutoencoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(INPUT_DIM, HIDDEN_DIM),
             nn.ReLU(),
-            nn.Linear(HIDDEN_DIM, BOTTLENECK_DIM),
-            nn.ReLU() # Bottleneck activation
+            nn.Linear(HIDDEN_DIM, BOTTLENECK_DIM)
+            # Removed ReLU from bottleneck to prevent dead neurons in low-D space
         )
         # Decoder
         self.decoder = nn.Sequential(

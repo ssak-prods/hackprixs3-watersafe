@@ -48,7 +48,7 @@ def generate_synthetic_data(n_samples=1000, mode='normal'):
         turbidity = np.clip(turbidity, 0.1, 4.5)
         
         tds = np.random.normal(250, 80, n_samples)
-        tds = np.clip(tds, 50, 480)
+        tds = np.clip(tds, 50, 500) # Realistic ppm range for baseline
         
         temp = np.random.normal(25, 2.0, n_samples)
         temp = np.clip(temp, 20, 30)
@@ -111,13 +111,17 @@ def process_data():
     # We need: pH, Turbidity, TDS (Solids), Temperature.
     # Real dataset has: ph, Solids, Turbidity. Missing Temperature.
     
-    # Rename columns to match our standard
-    # Column mapping check: 'ph' -> 'pH', 'Solids' -> 'TDS', 'Turbidity' -> 'turbidity'
+    # Rename columns and scale TDS
     df = df.rename(columns={
         'ph': 'pH',
-        'Solids': 'TDS',
+        'Solids': 'TDS_raw', # Keep raw to scale
         'Turbidity': 'turbidity'
     })
+    
+    # Scale Kaggle Solids (often > 20,000) to realistic ppm (0-1000)
+    # This is a heuristic translation for the TinyML demonstration to match 
+    # the user's sensor expectations.
+    df['TDS'] = (df['TDS_raw'] / 50.0).clip(0, 1000) 
     
     # 3. Synthesize Temperature if missing
     if 'temp' not in df.columns:
@@ -127,15 +131,28 @@ def process_data():
         df['temp'] = np.random.normal(25, 2.0, len(df))
         df['temp'] = df['temp'].clip(15, 35)
 
-    # 4. Filter Normal Data for Training (Potability == 1)
-    # The Project Instructions say: "Train on 'Normal' data only"
-    # In the dataset, 'Potability' == 1 usually means safe to drink (Normal).
+    # --- PURE SYNTHETIC DATA GENERATION ---
+    # The user requested a robust model covering all acceptable bounds
+    # based on global standards. We will generate 20,000 samples of pure 'Normal'.
     
-    df_normal = df[df['Potability'] == 1].copy()
-    df_test = df.copy() # Keep all for testing (contains anomalies)
+    # Acceptable / "Normal" Bounds:
+    # pH: 5.5 to 9.0 (Relaxed to handle slightly acidic/basic but generally safe water)
+    # TDS: 10.0 to 1000.0 (WHO max acceptable is 1000 ppm)
+    # Turbidity: 0.1 to 5.0 (WHO limit for drinking water is 5 NTU)
+    # Temp: 10.0 to 35.0 (Broad range of surface/ground water)
+    
+    n_synthetic = 20000
+    df_normal = pd.DataFrame({
+        'pH': np.random.uniform(5.5, 9.0, n_synthetic),
+        'turbidity': np.random.uniform(0.1, 5.0, n_synthetic),
+        'TDS': np.random.uniform(10.0, 1000.0, n_synthetic),
+        'temp': np.random.uniform(10.0, 35.0, n_synthetic)
+    })
+    
+    df_test = df.copy() # Keep Kaggle data for testing anomalous values
 
-    print(f"Normal samples for training: {len(df_normal)}")
-    print(f"Total samples for testing: {len(df_test)}")
+    print(f"Massive Synthetic Normal samples for training: {len(df_normal)}")
+    print(f"Kaggle samples for testing: {len(df_test)}")
 
     # Features for the model
     feature_cols = ['pH', 'turbidity', 'TDS', 'temp']
@@ -149,6 +166,9 @@ def process_data():
     
     # Transform
     X_normal = scaler.transform(df_normal[feature_cols])
+    # For testing, we only care about the features, but we need to handle potential NaNs
+    df_test = df_test.dropna(subset=['pH', 'TDS_raw', 'turbidity', 'temp'])
+    df_test['TDS'] = (df_test['TDS_raw'] / 50.0).clip(0, 1000)
     X_test = scaler.transform(df_test[feature_cols])
     
     # 6. Save

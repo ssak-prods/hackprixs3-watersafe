@@ -1,0 +1,45 @@
+Time(s) | Temp   |  TDS   | Turbidity [V]       | MSE       | Verdict         | Conf | Reason
+--------|--------|--------|---------------------|-----------|-----------------|------|-------------------------------
+
+✓ System boot. Raw Autoencoder active. Context Engine pre-alpha.
+
+    3  |  25.9C  |   202ppm  |     45NTU [2.602V]  |  MSE: 30.566  |   ALERT !!!   Conf: 80%  |  High MSE Threshold Alert
+    6  |  25.0C  |   214ppm  |     18NTU [2.501V]  |  MSE: 11.824  |  [UNCERT]     Conf: 49%  |  Noisy baseline
+    9  |  25.5C  |   209ppm  |      6NTU [2.652V]  |  MSE: 35.878  |   ALERT !!!   Conf: 99%  |  High MSE Threshold Alert
+   12  |  26.5C  |   187ppm  |     10NTU [2.577V]  |  MSE: 43.355  |   ALERT !!!   Conf: 89%  |  High MSE Threshold Alert
+   15  |  25.3C  |   192ppm  |     47NTU [2.942V]  |  MSE: 13.874  |  [UNCERT]     Conf: 60%  |  Noisy baseline
+   18  |  26.1C  |   181ppm  |     26NTU [2.938V]  |  MSE: 31.448  |   ALERT !!!   Conf: 93%  |  High MSE Threshold Alert
+   21  |  25.5C  |   217ppm  |     33NTU [2.564V]  |  MSE: 13.757  |  [UNCERT]     Conf: 66%  |  Noisy baseline
+   24  |  25.0C  |   183ppm  |     18NTU [2.822V]  |  MSE: 18.152  |  [UNCERT]     Conf: 58%  |  Noisy baseline
+   27  |  26.0C  |   189ppm  |      2NTU [3.072V]  |  MSE: 43.502  |   ALERT !!!   Conf: 99%  |  High MSE Threshold Alert
+   30  |  26.3C  |   216ppm  |     24NTU [2.908V]  |  MSE: 12.219  |  [UNCERT]     Conf: 53%  |  Noisy baseline
+   33  |  25.4C  |   211ppm  |      9NTU [2.661V]  |  MSE: 11.621  |  [UNCERT]     Conf: 52%  |  Noisy baseline
+   36  |  26.4C  |   186ppm  |     27NTU [2.975V]  |  MSE: 34.594  |   ALERT !!!   Conf: 82%  |  High MSE Threshold Alert
+   39  |  25.7C  |   216ppm  |     34NTU [2.599V]  |  MSE: 10.259  |  [UNCERT]     Conf: 67%  |  Noisy baseline
+   42  |  25.8C  |   207ppm  |     46NTU [3.057V]  |  MSE: 29.148  |  [UNCERT]     Conf: 68%  |  Noisy baseline
+   45  |  25.2C  |   205ppm  |      9NTU [3.133V]  |  MSE: 12.318  |  [UNCERT]     Conf: 57%  |  Noisy baseline
+   48  |  26.2C  |   219ppm  |     37NTU [3.189V]  |  MSE: 32.131  |   ALERT !!!   Conf: 89%  |  High MSE Threshold Alert
+   51  |  25.4C  |   218ppm  |     38NTU [2.749V]  |  MSE: 19.744  |  [UNCERT]     Conf: 63%  |  Noisy baseline
+   54  |  25.5C  |   196ppm  |     13NTU [2.528V]  |  MSE: 38.287  |   ALERT !!!   Conf: 95%  |  High MSE Threshold Alert
+   57  |  26.1C  |   213ppm  |     43NTU [2.581V]  |  MSE: 42.781  |   ALERT !!!   Conf: 81%  |  High MSE Threshold Alert
+   60  |  25.3C  |   196ppm  |     11NTU [2.618V]  |  MSE: 43.166  |   ALERT !!!   Conf: 87%  |  High MSE Threshold Alert
+   63  |  26.1C  |   196ppm  |      9NTU [2.801V]  |  MSE: 42.698  |   ALERT !!!   Conf: 82%  |  High MSE Threshold Alert
+   66  |  26.5C  |   181ppm  |     26NTU [3.273V]  |  MSE: 30.012  |   ALERT !!!   Conf: 95%  |  High MSE Threshold Alert
+   69  |  26.4C  |   185ppm  |     38NTU [2.821V]  |  MSE: 42.555  |   ALERT !!!   Conf: 80%  |  High MSE Threshold Alert
+   72  |  25.1C  |   199ppm  |     36NTU [2.882V]  |  MSE: 17.532  |  [UNCERT]     Conf: 60%  |  Noisy baseline
+   75  |  26.2C  |   214ppm  |      9NTU [3.012V]  |  MSE: 10.984  |  [UNCERT]     Conf: 65%  |  Noisy baseline
+   78  |  26.3C  |   192ppm  |     15NTU [2.857V]  |  MSE: 37.177  |   ALERT !!!   Conf:100%  |  High MSE Threshold Alert
+   81  |  25.4C  |   184ppm  |     45NTU [2.535V]  |  MSE: 27.510  |  [UNCERT]     Conf: 45%  |  Noisy baseline
+   84  |  26.2C  |   197ppm  |     48NTU [3.119V]  |  MSE: 12.860  |  [UNCERT]     Conf: 66%  |  Noisy baseline
+   87  |  25.9C  |   219ppm  |     27NTU [3.190V]  |  MSE: 37.781  |   ALERT !!!   Conf: 80%  |  High MSE Threshold Alert
+   90  |  26.2C  |   219ppm  |     19NTU [2.938V]  |  MSE: 11.105  |  [UNCERT]     Conf: 44%  |  Noisy baseline
+   93  |  26.5C  |   215ppm  |     48NTU [3.205V]  |  MSE: 43.181  |   ALERT !!!   Conf: 95%  |  High MSE Threshold Alert
+   96  |  26.5C  |   219ppm  |     14NTU [3.082V]  |  MSE: 30.960  |   ALERT !!!   Conf: 88%  |  High MSE Threshold Alert
+   99  |  25.6C  |   195ppm  |     28NTU [3.009V]  |  MSE: 42.498  |   ALERT !!!   Conf: 83%  |  High MSE Threshold Alert
+  102  |  26.0C  |   192ppm  |     14NTU [2.833V]  |  MSE: 18.320  |  [UNCERT]     Conf: 62%  |  Noisy baseline
+  105  |  25.1C  |   206ppm  |     43NTU [3.225V]  |  MSE: 11.490  |  [UNCERT]     Conf: 56%  |  Noisy baseline
+  108  |  26.4C  |   186ppm  |     11NTU [3.146V]  |  MSE: 44.872  |   ALERT !!!   Conf: 91%  |  High MSE Threshold Alert
+  111  |  25.5C  |   218ppm  |     41NTU [2.927V]  |  MSE: 37.852  |   ALERT !!!   Conf: 84%  |  High MSE Threshold Alert
+  114  |  26.4C  |   220ppm  |     17NTU [2.769V]  |  MSE: 15.410  |  [UNCERT]     Conf: 47%  |  Noisy baseline
+  117  |  25.2C  |   195ppm  |      1NTU [2.820V]  |  MSE: 11.354  |  [UNCERT]     Conf: 60%  |  Noisy baseline
+  120  |  25.2C  |   187ppm  |     35NTU [3.188V]  |  MSE: 33.424  |   ALERT !!!   Conf: 82%  |  High MSE Threshold Alert

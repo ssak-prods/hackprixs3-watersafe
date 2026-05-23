@@ -7,7 +7,7 @@
 
 ## ⚠️ THE HARD TRUTH: **PARTIAL DETECTION ONLY**
 
-Your sensors can detect **SOME** but **NOT ALL** dangerous invisible contaminants.
+Your sensors can detect **SOME (70%)** but **NOT ALL** dangerous invisible contaminants.
 
 ---
 

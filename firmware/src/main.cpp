@@ -1,313 +1,499 @@
 /*
- * ╔═══════════════════════════════════════════════════════════════╗
- * ║  WaterSafe V2 - FULL SYSTEM INTEGRATION                      ║
- * ║  All 3 Sensors + OLED Live Dashboard                         ║
- * ╚═══════════════════════════════════════════════════════════════╝
- * 
+ * ╔═══════════════════════════════════════════════════════════════════╗
+ * ║  WaterSafe V2 — Edge AI + Context Enrichment Layer               ║
+ * ║  Confidence-Scored Anomaly Detection | 5-Screen OLED Dashboard   ║
+ * ╚═══════════════════════════════════════════════════════════════════╝
+ *
  * Hardware:
- * - ESP32-WROOM-32 (38-pin)
- * - DS18B20 Temperature Sensor (GPIO 4, with 4.7kΩ pullup)
- * - DFRobot TDS Sensor (ADS1115 A0)
- * - DFRobot Turbidity Sensor (ADS1115 A1)
- * - ADS1115 16-bit ADC (I2C: 0x48)
- * - OLED SSD1306 Display (I2C: 0x3C)
- * 
- * Features:
- * - Reads all 3 sensors every 3 seconds
- * - Displays live data on OLED
- * - Shows status: EXCELLENT / GOOD / FAIR / POOR / BAD
- * - Logs to Serial Monitor (copy to CSV for ML training)
+ *   - ESP32-WROOM-32 (38-pin)
+ *   - DS18B20 Temperature Sensor (GPIO 4, 4.7kΩ pullup)
+ *   - DFRobot TDS Sensor       (ADS1115 A0)
+ *   - DFRobot Turbidity Sensor (ADS1115 A1, switch → A)
+ *   - ADS1115 16-bit ADC       (I2C: 0x48)
+ *   - OLED SSD1306 128×64      (I2C: 0x3C)
+ *
+ * Pipeline:
+ *   Sensors → Autoencoder MSE → 5-Signal Context Engine → Confidence %
+ *
+ * OLED Screens (auto-cycling):
+ *   0: Temperature   1: TDS   2: Turbidity
+ *   3: AI Status + Confidence
+ *   4: DIAGNOSIS (why screen) — shown only on alert
  */
 
 #include <Arduino.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
 #include <Wire.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Adafruit_ADS1X15.h>
 #include <Adafruit_SSD1306.h>
+#include "ml_inference.h"
+#include "context_layer.h"
 
-// === HARDWARE PINS ===
-#define ONE_WIRE_BUS 4        // DS18B20 Temperature Sensor
-#define SCREEN_WIDTH 128
+// ─── HARDWARE ────────────────────────────────────────────────────────────────
+#define ONE_WIRE_BUS  4
+#define SCREEN_WIDTH  128
 #define SCREEN_HEIGHT 64
-#define OLED_RESET -1
+#define OLED_RESET    -1
 
-// === SENSOR CALIBRATION ===
-// TDS Calibration
-#define TDS_VREF 3.3              // ADC reference voltage
-#define TDS_KVALUE 0.5            // DFRobot calibration constant
+// ─── SENSOR CALIBRATION ──────────────────────────────────────────────────────
+#define TDS_KVALUE      0.5f
 
-// Turbidity Calibration (from your tests!)
-#define TURB_V_CLEAR 3.2          // Max voltage (clear water)
-#define TURB_V_MURKY 0.5          // Min voltage (very murky)
-#define TURB_NTU_MIN 0.0          // NTU for clear
-#define TURB_NTU_MAX 3000.0       // NTU for murky
+// ─── CLOUD DASHBOARD (Railway) ───────────────────────────────────────────────
+#define ENABLE_WIFI       false   // Set to true to enable cloud logging, false for 100% stable offline mode
+const char* WIFI_SSID     = "ga14";
+const char* WIFI_PASSWORD = "meow123321";
 
-// === OBJECTS ===
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature tempSensor(&oneWire);
-Adafruit_ADS1115 ads;
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+// Update this to your deployed railway app domain (e.g. https://watersafe.up.railway.app/api/ingest)
+const char* API_ENDPOINT  = "http://192.168.190.249:3000/api/ingest";
 
-// === SENSOR DATA ===
+// Turbidity: DFRobot analog output — higher voltage = clearer water
+// Calibrate TURB_V_CLEAR to what the sensor reads in your clean water sample.
+// Read the [V] column in Serial Monitor with clean water and set it here.
+#define TURB_V_CLEAR  2.90f   // ← Adjust if still off. Your clean water [V]
+#define TURB_V_MURKY  0.50f
+#define TURB_NTU_MAX  3000.0f
+
+// ─── OBJECTS ─────────────────────────────────────────────────────────────────
+OneWire             oneWire(ONE_WIRE_BUS);
+DallasTemperature   tempSensor(&oneWire);
+Adafruit_ADS1115    ads;
+Adafruit_SSD1306    display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// ─── PHYSICAL CELLULAR SMS CONFIGURATION ──────────────────────────────────────
+#define ENABLE_CELLULAR_SMS  true   // Set to true to enable direct physical SIM800L/SIM7600 alerts
+#define GSM_RX_PIN           16
+#define GSM_TX_PIN           17
+HardwareSerial gsmSerial(2);        // Use ESP32 UART2 for cell communication
+const char* RECIPIENT_NUMBER = "+919876543210"; // Replace with your phone number for the demo
+unsigned long lastSMSSentTime = 0;  // Debounce SMS triggers
+
+// ─── SENSOR DATA ─────────────────────────────────────────────────────────────
 struct SensorData {
-  float temperature;   // °C
-  float tds;           // ppm
-  float turbidity;     // NTU
-  unsigned long timestamp; // milliseconds
+  float temperature;    // °C
+  float tds;            // ppm
+  float tds_voltage;    // Raw V (for TDS calibration)
+  float turbidity;      // NTU
+  float turb_voltage;   // Raw V (for turbidity calibration)
+  unsigned long timestamp;
 };
 
-SensorData currentData;
+SensorData    currentData;
+ContextResult ctx;  // Full context result: confidence, alert, why strings
+
 unsigned long lastReadTime = 0;
-const unsigned long READ_INTERVAL = 3000; // 3 seconds
+const unsigned long READ_INTERVAL = 3000;  // 3 seconds
 
-// === HELPER FUNCTIONS ===
+// ─── UI STATE MACHINE ─────────────────────────────────────────────────────────
+// States: 0=Temp  1=TDS  2=Turb  3=Status  4=Diagnosis(why)
+unsigned long lastUIFrame    = 0;
+unsigned long stateStartTime = 0;
+int           uiState        = 0;
+int           scrollX        = 128;   // for scrolling text on status screen
 
-// Convert voltage to TDS (ppm)
-float voltageToTDS(float voltage, float temperature) {
-  // Temperature compensation factor
-  float compensationCoefficient = 1.0 + 0.02 * (temperature - 25.0);
-  float compensationVoltage = voltage / compensationCoefficient;
-  
-  // TDS = (133.42 * V^3 - 255.86 * V^2 + 857.39 * V) * 0.5
-  // DFRobot formula
-  float tdsValue = (133.42 * pow(compensationVoltage, 3) 
-                   - 255.86 * pow(compensationVoltage, 2) 
-                   + 857.39 * compensationVoltage) * TDS_KVALUE;
-  
-  return max(0.0f, tdsValue);
+// ─── SENSOR HELPERS ──────────────────────────────────────────────────────────
+float voltageToTDS(float v, float t) {
+  float coeff = 1.0f + 0.02f * (t - 25.0f);
+  float vc    = v / coeff;
+  return max(0.0f, (133.42f * vc * vc * vc
+                  - 255.86f * vc * vc
+                  + 857.39f * vc) * TDS_KVALUE);
 }
 
-// Convert voltage to Turbidity (NTU)
-float voltageToNTU(float voltage) {
-  // Clamp voltage
-  if (voltage > TURB_V_CLEAR) voltage = TURB_V_CLEAR;
-  if (voltage < 0) voltage = 0;
-  
-  // Linear interpolation: higher voltage = lower NTU
-  float ratio = (voltage - TURB_V_MURKY) / (TURB_V_CLEAR - TURB_V_MURKY);
-  if (ratio < 0) ratio = 0;
-  if (ratio > 1) ratio = 1;
-  
-  // Invert: high voltage = low NTU
-  float ntu = TURB_NTU_MAX - (ratio * (TURB_NTU_MAX - TURB_NTU_MIN));
-  
-  return ntu;
+float voltageToNTU(float v) {
+  if (v > TURB_V_CLEAR) v = TURB_V_CLEAR;
+  if (v < 0.0f)         v = 0.0f;
+  float ratio = (v - TURB_V_MURKY) / (TURB_V_CLEAR - TURB_V_MURKY);
+  if (ratio < 0.0f) ratio = 0.0f;
+  if (ratio > 1.0f) ratio = 1.0f;
+  return TURB_NTU_MAX - (ratio * TURB_NTU_MAX);
 }
 
-// Get status string for TDS
-String getTDSStatus(float tds) {
-  if (tds < 50) return "EXCELLENT";
-  else if (tds < 150) return "GOOD";
-  else if (tds < 300) return "FAIR";
-  else if (tds < 600) return "POOR";
-  else return "BAD";
-}
-
-// Get status string for Turbidity
-String getTurbidityStatus(float ntu) {
-  if (ntu < 5) return "EXCELLENT";
-  else if (ntu < 50) return "GOOD";
-  else if (ntu < 500) return "FAIR";
-  else if (ntu < 1000) return "POOR";
-  else return "BAD";
-}
-
-// Get temperature status
-String getTempStatus(float temp) {
-  if (temp >= 10 && temp <= 30) return "NORMAL";
-  else if (temp < 10) return "COLD";
-  else return "HOT";
-}
-
-// Get overall system status
-String getOverallStatus() {
-  // Count how many parameters are BAD/POOR
-  int bad_count = 0;
-  int poor_count = 0;
-  
-  if (getTDSStatus(currentData.tds) == "BAD") bad_count++;
-  else if (getTDSStatus(currentData.tds) == "POOR") poor_count++;
-  
-  if (getTurbidityStatus(currentData.turbidity) == "BAD") bad_count++;
-  else if (getTurbidityStatus(currentData.turbidity) == "POOR") poor_count++;
-  
-  if (bad_count >= 2) return "BAD";
-  else if (bad_count == 1 || poor_count >= 2) return "POOR";
-  else if (poor_count == 1) return "FAIR";
-  else return "GOOD";
-}
-
-// === SENSOR READING ===
+// ─── SENSOR READ ─────────────────────────────────────────────────────────────
 void readSensors() {
-  // 1. Read Temperature
   tempSensor.requestTemperatures();
-  currentData.temperature = tempSensor.getTempCByIndex(0);
+  float t = tempSensor.getTempCByIndex(0);
   
-  // 2. Read TDS (A0)
+  // Safe nominal fallback (25.0C) if temperature probe reading fails or drifts out of bounds
+  if (t == DEVICE_DISCONNECTED_C || t < -10.0f || t > 85.0f) {
+    currentData.temperature = 25.0f;
+  } else {
+    currentData.temperature = t;
+  }
+
   int16_t adc0 = ads.readADC_SingleEnded(0);
-  float voltage0 = adc0 * 0.1875 / 1000.0; // Convert to Volts
-  currentData.tds = voltageToTDS(voltage0, currentData.temperature);
-  
-  // 3. Read Turbidity (A1)
+  float   v0   = adc0 * 0.1875f / 1000.0f;
+  currentData.tds_voltage = v0;
+  currentData.tds = voltageToTDS(v0, currentData.temperature);
+
   int16_t adc1 = ads.readADC_SingleEnded(1);
-  float voltage1 = adc1 * 0.1875 / 1000.0; // Convert to Volts
-  currentData.turbidity = voltageToNTU(voltage1);
-  
-  // 4. Timestamp
+  float   v1   = adc1 * 0.1875f / 1000.0f;
+  currentData.turb_voltage = v1;
+  currentData.turbidity    = voltageToNTU(v1);
+
   currentData.timestamp = millis();
 }
 
-// === DISPLAY UPDATE ===
+// ─── OLED HELPERS ────────────────────────────────────────────────────────────
+// Draws a thin separator line
+void drawSeparator(int y) {
+  display.drawLine(0, y, SCREEN_WIDTH - 1, y, SSD1306_WHITE);
+}
+
+// Large label + value pair (for sensor screens)
+void drawSensorScreen(const char* label1, const char* label2, const char* value, const char* unit) {
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.print(label1);
+  if (strlen(label2) > 0) {
+    display.setCursor(0, 10);
+    display.print(label2);
+    drawSeparator(20);
+  } else {
+    drawSeparator(10);
+  }
+  
+  display.setTextSize(3);
+  display.setCursor(4, 25);
+  display.print(value);
+  
+  display.setTextSize(1);
+  display.setCursor(4, 54);
+  display.print(unit);
+}
+
+// Alert label with inverted background flash (for high severity)
+void drawAlertBanner(const char* label, bool flash, unsigned long t) {
+  bool inv = flash && ((t / 300) % 2 == 0);
+  if (inv) display.fillRect(0, 0, SCREEN_WIDTH, 20, SSD1306_WHITE);
+  display.setTextColor(inv ? SSD1306_BLACK : SSD1306_WHITE);
+  display.setTextSize(2);
+  display.setCursor(4, 2);
+  display.print(label);
+  display.setTextColor(SSD1306_WHITE);
+}
+
+// ─── DISPLAY UPDATE ──────────────────────────────────────────────────────────
 void updateDisplay() {
   display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  
-  // Title
-  display.setCursor(0, 0);
-  display.println("WaterSafe V2 Monitor");
-  display.drawLine(0, 10, 128, 10, SSD1306_WHITE);
-  
-  // Temperature
-  display.setCursor(0, 14);
-  display.print("Temp: ");
-  display.print(currentData.temperature, 1);
-  display.print(" C");
-  
-  // TDS
-  display.setCursor(0, 26);
-  display.print("TDS:  ");
-  display.print((int)currentData.tds);
-  display.print(" ppm");
-  
-  display.setCursor(75, 26);
-  display.print("[");
-  display.print(getTDSStatus(currentData.tds).substring(0, 4)); // First 4 chars
-  display.print("]");
-  
-  // Turbidity
-  display.setCursor(0, 38);
-  display.print("Turb: ");
-  display.print((int)currentData.turbidity);
-  display.print(" NTU");
-  
-  display.setCursor(75, 38);
-  display.print("[");
-  display.print(getTurbidityStatus(currentData.turbidity).substring(0, 4));
-  display.print("]");
-  
-  // Overall Status
-  display.drawLine(0, 50, 128, 50, SSD1306_WHITE);
-  display.setCursor(0, 54);
-  display.print("Status: ");
-  String status = getOverallStatus();
-  display.print(status);
-  
-  // Show symbol based on status
-  if (status == "GOOD") {
-    display.setCursor(120, 54);
-    display.print("*"); // Check mark placeholder
-  } else if (status == "BAD") {
-    display.setCursor(120, 54);
-    display.print("X");
+  unsigned long t = millis() - stateStartTime;
+  char buf[24];
+
+  // ── STATE 0: TEMPERATURE ─────────────────────────────────────────────────
+  if (uiState == 0) {
+    snprintf(buf, sizeof(buf), "%.1f", currentData.temperature);
+    drawSensorScreen("TEMP:", "", buf, "Celsius");
+    if (t > 2000) { uiState = 1; stateStartTime = millis(); }
   }
-  
+
+  // ── STATE 1: TDS (INORGANIC CONCENTRATION) ───────────────────────────────
+  else if (uiState == 1) {
+    snprintf(buf, sizeof(buf), "%d", (int)currentData.tds);
+    drawSensorScreen("INORGANIC", "CONCENTRATION:", buf, "ppm");
+    if (t > 2000) { uiState = 2; stateStartTime = millis(); }
+  }
+
+  // ── STATE 2: TURBIDITY (CLOUDINESS) ──────────────────────────────────────
+  else if (uiState == 2) {
+    snprintf(buf, sizeof(buf), "%d", (int)currentData.turbidity);
+    drawSensorScreen("CLOUDINESS:", "", buf, "NTU");
+    if (t > 2000) { uiState = 3; stateStartTime = millis(); }
+  }
+
+  // ── STATE 3: AI STATUS (VERDICT) ─────────────────────────────────────────
+  else if (uiState == 3) {
+    if (ctx.alert_level == ALERT_NORMAL) {
+      // ─ NORMAL ─
+      display.setTextColor(SSD1306_WHITE);
+      display.fillRect(0, 0, SCREEN_WIDTH, 20, SSD1306_WHITE);
+      display.setTextColor(SSD1306_BLACK);
+      display.setTextSize(2);
+      display.setCursor(4, 3);
+      display.print("WATER SAFE");
+      
+      display.setTextColor(SSD1306_WHITE);
+      display.setTextSize(1);
+      display.setCursor(15, 35);
+      display.print("Clear for drinking");
+      
+      if (t > 3000) { uiState = 0; stateStartTime = millis(); scrollX = 128; }
+
+    } else {
+      // ─ ALERT ─
+      const char* banner;
+      bool flash = false;
+      if      (ctx.alert_level == ALERT_CRITICAL)  { banner = "DANGER !!!"; flash = true; }
+      else if (ctx.alert_level == ALERT_WARNING)   { banner = "UNSAFE !! "; flash = true; }
+      else if (ctx.alert_level == ALERT_CAUTION)   { banner = "CAUTION ! "; flash = false; }
+      else                                          { banner = "UNCERTAIN "; flash = false; }
+
+      drawAlertBanner(banner, flash, t);
+
+      // Actionable instruction / Simple reason
+      display.setTextSize(1);
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(2, 28);
+      display.print("Conf: ");
+      display.print(ctx.confidence);
+      display.print("%");
+
+      // Scrolling reason
+      drawSeparator(44);
+      display.setTextSize(1);
+      display.setCursor(scrollX, 50);
+      display.print(ctx.reason);
+      scrollX -= 4; // Faster animation
+      if (scrollX < -(int)(strlen(ctx.reason) * 6)) scrollX = 128;
+
+      unsigned long dwell = (ctx.alert_level >= ALERT_WARNING) ? 4000 : 3000;
+      if (t > dwell) {
+        uiState = 0; // Skip Diagnosis screen, go straight back to sensors
+        stateStartTime = millis();
+        scrollX = 128;
+      }
+    }
+  }
+
   display.display();
 }
 
-// === SERIAL LOGGING (for CSV export) ===
+// ─── SERIAL LOG ──────────────────────────────────────────────────────────────
 void logToSerial() {
-  // CSV Format: timestamp, temperature, tds, turbidity, label
-  Serial.print(currentData.timestamp);
-  Serial.print(",");
-  Serial.print(currentData.temperature, 2);
-  Serial.print(",");
-  Serial.print(currentData.tds, 2);
-  Serial.print(",");
-  Serial.print(currentData.turbidity, 2);
-  Serial.print(",");
-  Serial.print("normal"); // Change to "anomaly" during tests
-  Serial.println();
+  char buf[160];
+  const char* verdict;
+  if      (ctx.alert_level == ALERT_NORMAL)    verdict = "[NORMAL]   ";
+  else if (ctx.alert_level == ALERT_UNCERTAIN) verdict = "[UNCERT]   ";
+  else if (ctx.alert_level == ALERT_CAUTION)   verdict = " CAUTION ! ";
+  else if (ctx.alert_level == ALERT_WARNING)   verdict = " WARNING !!";
+  else                                          verdict = " ALERT !!! ";
+
+  snprintf(buf, sizeof(buf),
+    "%5lu  |  %5.1fC  |  %4dppm [%.3fV]  |  %5dNTU [%.3fV]  |  MSE:%7.3f  |  %s  Conf:%3d%%  |  %s",
+    currentData.timestamp / 1000,
+    currentData.temperature,
+    (int)currentData.tds,
+    currentData.tds_voltage,
+    (int)currentData.turbidity,
+    currentData.turb_voltage,
+    ml_get_last_error(),
+    verdict,
+    ctx.confidence,
+    ctx.reason);
+  Serial.println(buf);
 }
 
-// === SETUP ===
+// ─── CLOUD PUSH ──────────────────────────────────────────────────────────────
+void pushToDashboard() {
+  if (!ENABLE_WIFI) {
+    return; // Fast return when running in offline mode to prevent brownouts
+  }
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(API_ENDPOINT);
+    http.addHeader("Content-Type", "application/json");
+
+    // Build JSON Payload
+    String payload = "{";
+    payload += "\"tds\":" + String(currentData.tds, 1) + ",";
+    payload += "\"turbidity\":" + String(currentData.turbidity, 1) + ",";
+    payload += "\"temperature\":" + String(currentData.temperature, 1) + ",";
+    payload += "\"confidence\":" + String(ctx.confidence) + ",";
+    payload += "\"alert_level\":" + String(ctx.alert_level) + ",";
+    payload += "\"reason\":\"" + String(ctx.reason) + "\",";
+    payload += "\"is_anomaly\":" + String(ctx.is_anomaly ? "true" : "false");
+    payload += "}";
+
+    int httpResponseCode = http.POST(payload);
+    if (httpResponseCode > 0) {
+      Serial.print(" [☁️ ] Cloud Push OK: ");
+      Serial.println(httpResponseCode);
+    } else {
+      Serial.print(" [☁️ ] Cloud Push Error: ");
+      Serial.println(httpResponseCode);
+    }
+    http.end();
+  } else {
+    Serial.println(" [☁️ ] Wi-Fi Disconnected. Skipping push.");
+  }
+}
+
+// ─── PHYSICAL SMS SENDING ───────────────────────────────────────────────────
+void sendPhysicalSMS(const char* phoneNumber, const char* messageText) {
+  if (!ENABLE_CELLULAR_SMS) return;
+  
+  Serial.printf("\n[CELLULAR] Dispatching alert SMS to %s...\n", phoneNumber);
+  
+  // Handshake with AT command
+  gsmSerial.println("AT");
+  delay(200);
+  
+  // Set SMS Text Mode
+  gsmSerial.println("AT+CMGF=1");
+  delay(200);
+  
+  // Setup recipient phone number
+  gsmSerial.print("AT+CMGS=\"");
+  gsmSerial.print(phoneNumber);
+  gsmSerial.println("\"");
+  delay(300);
+  
+  // Write message content
+  gsmSerial.print(messageText);
+  delay(300);
+  
+  // Send Ctrl+Z (ASCII 26) to commit and send SMS
+  gsmSerial.write(26);
+  delay(4000); // Give the module 4 seconds to transmit
+  
+  Serial.println("[CELLULAR] SMS transmit process completed.\n");
+}
+
+// ─── SETUP ───────────────────────────────────────────────────────────────────
 void setup() {
+
   Serial.begin(115200);
-  delay(1000);
-  
-  Serial.println("\n\n╔═══════════════════════════════════════╗");
-  Serial.println("║  WaterSafe V2 - Full System Test    ║");
-  Serial.println("╚═══════════════════════════════════════╝\n");
-  
-  // Initialize I2C
+  delay(800);
+
+  Serial.println("\n╔══════════════════════════════════════════╗");
+  Serial.println("║  WaterSafe V2 — Context-Aware Edge AI   ║");
+  Serial.println("╚══════════════════════════════════════════╝\n");
+
   Wire.begin(21, 22);
-  
-  // Initialize OLED
-  Serial.print("Initializing OLED... ");
+
+  Serial.print("OLED      ... ");
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println("FAILED!");
-    while (1);
+    Serial.println("FAILED"); while (1);
   }
   Serial.println("OK");
-  
+
+  // Boot splash
   display.clearDisplay();
-  display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 0);
-  display.println("WaterSafe V2");
-  display.println("Initializing...");
+  display.setTextSize(1);
+  display.setCursor(20, 10);  display.println("WaterSafe V2");
+  display.setCursor(12, 22);  display.println("Context-Aware AI");
+  display.setCursor(30, 38);  display.println("Starting...");
   display.display();
-  delay(1000);
-  
-  // Initialize Temperature Sensor
-  Serial.print("Initializing DS18B20... ");
+
+  Serial.print("DS18B20   ... ");
   tempSensor.begin();
-  int deviceCount = tempSensor.getDeviceCount();
-  if (deviceCount == 0) {
-    Serial.println("FAILED!");
-    while (1);
-  }
-  Serial.print("OK (");
-  Serial.print(deviceCount);
-  Serial.println(" device(s))");
-  
-  // Initialize ADS1115
-  Serial.print("Initializing ADS1115... ");
-  if (!ads.begin()) {
-    Serial.println("FAILED!");
-    while (1);
-  }
+  if (tempSensor.getDeviceCount() == 0) { Serial.println("FAILED"); while (1); }
   Serial.println("OK");
-  ads.setGain(GAIN_TWOTHIRDS); // ±6.144V range
-  
-  // Print CSV Header
-  Serial.println("\n=== CSV DATA LOG (copy to file) ===");
-  Serial.println("timestamp,temperature,tds,turbidity,label");
-  
-  Serial.println("\n✓ All Systems Ready!");
-  Serial.println("Reading sensors every 3 seconds...\n");
-  
-  delay(1000);
+
+  Serial.print("ADS1115   ... ");
+  if (!ads.begin()) { Serial.println("FAILED"); while (1); }
+  ads.setGain(GAIN_TWOTHIRDS);
+  Serial.println("OK  (gain ±6.144V)");
+
+  // Initialize Wi-Fi
+  if (ENABLE_WIFI) {
+    Serial.print("Wi-Fi     ... Connecting to ");
+    Serial.print(WIFI_SSID);
+    
+    // Set OLED to show Wi-Fi status temporarily
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setCursor(10, 20); display.print("Connecting to Wi-Fi");
+    display.setCursor(10, 35); display.print(WIFI_SSID);
+    display.display();
+
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+    // Wait max 10 seconds for Wi-Fi connection
+    int retries = 0;
+    while (WiFi.status() != WL_CONNECTED && retries < 20) {
+      delay(500);
+      Serial.print(".");
+      retries++;
+    }
+    
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.println(" OK!");
+      Serial.print("IP Address: ");
+      Serial.println(WiFi.localIP());
+    } else {
+      // We continue execution standalone if WiFi fails.
+      Serial.println(" FAILED (Running Offline)");
+    }
+  } else {
+    Serial.println("DISABLED (Offline Mode)");
+    WiFi.mode(WIFI_OFF);
+  }
+
+  // Initialize GSM Serial
+  if (ENABLE_CELLULAR_SMS) {
+    Serial.print("GSM Serial ... Initializing on RX:16 TX:17... ");
+    gsmSerial.begin(115200, SERIAL_8N1, GSM_RX_PIN, GSM_TX_PIN);
+    Serial.println("OK");
+  }
+
+  ml_setup();
+  context_setup();
+  uiState       = 0;
+
+  stateStartTime = millis();
+  ctx.alert_level = ALERT_NORMAL;
+  ctx.confidence  = 0;
+  snprintf(ctx.reason, sizeof(ctx.reason), "Initializing...");
+
+  Serial.println("\nTime(s) | Temp   |  TDS [V]         | Turbidity [V]       | MSE       | Verdict         | Conf | Reason");
+  Serial.println("--------|--------|------------------|---------------------|-----------|-----------------|------|-------------------------------");
+  Serial.println("\n✓ All systems ready. Context-Aware Edge AI active.\n");
+  delay(600);
 }
 
-// === MAIN LOOP ===
+// ─── MAIN LOOP ───────────────────────────────────────────────────────────────
 void loop() {
-  unsigned long currentTime = millis();
-  
-  // Read sensors every 3 seconds
-  if (currentTime - lastReadTime >= READ_INTERVAL) {
-    lastReadTime = currentTime;
-    
-    // Read all sensors
+  unsigned long now = millis();
+
+  // ── Sensor read + AI evaluation every 3s ─────────────────────────────────
+  if (now - lastReadTime >= READ_INTERVAL) {
+    lastReadTime = now;
+
     readSensors();
-    
-    // Update OLED display
-    updateDisplay();
-    
-    // Log to Serial (for CSV export)
+
+    // Layer 1: Autoencoder MSE + persistence
+    ml_check_anomaly(currentData.temperature, currentData.tds, currentData.turbidity);
+
+    // Layer 2: Context Engine → confidence score + why strings
+    uint8_t old_level = ctx.alert_level;
+    ctx = context_evaluate(
+      currentData.tds,
+      currentData.turbidity,
+      currentData.temperature,
+      ml_get_last_error(),
+      ml_get_anomaly_count()
+    );
+
+    // FIX: Instant OLED reaction ONLY when escalating from NORMAL, to prevent skipping sensor displays forever.
+    if (old_level == ALERT_NORMAL && ctx.alert_level > ALERT_NORMAL && uiState < 3) {
+      uiState = 3;
+      stateStartTime = millis();
+    }
+
+    // Trigger physical SMS alert on escalation
+    if (old_level == ALERT_NORMAL && ctx.alert_level > ALERT_NORMAL) {
+      if (now - lastSMSSentTime > 60000) { // 60s debounce for fast demo cycles
+        lastSMSSentTime = now;
+        char alertMsg[160];
+        snprintf(alertMsg, sizeof(alertMsg), 
+                 "[ALERT] Well #1 UNCLEAN!\nReason: %s\nTDS: %d ppm | Turbidity: %d NTU\nWater cutoff activated locally.", 
+                 ctx.reason, (int)currentData.tds, (int)currentData.turbidity);
+        sendPhysicalSMS(RECIPIENT_NUMBER, alertMsg);
+      }
+    }
+
     logToSerial();
+    pushToDashboard();
   }
-  
-  delay(10); // Small delay to prevent WDT issues
+
+  // ── OLED animation at 25fps ─────────────────────────────────────────────
+  if (now - lastUIFrame >= 40) {
+    lastUIFrame = now;
+    updateDisplay();
+  }
 }
