@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 // Allow requests from any origin (Vercel frontend, ESP32, etc.)
 app.use(cors({
   origin: '*',
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: '*'
 }));
 app.use(express.json());
 

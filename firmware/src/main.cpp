@@ -49,7 +49,7 @@ const char* WIFI_PASSWORD = "meow123321";
 
 // Point directly at localtunnel (Vercel rewrites can't bypass localtunnel's interstitial page)
 // UPDATE THIS URL every time you restart localtunnel!
-const char* API_ENDPOINT  = "https://fifty-states-tickle.loca.lt/api/ingest";
+const char* API_ENDPOINT  = "https://hackprixs3-watersafe-production.up.railway.app/api/ingest";
 
 // Turbidity: DFRobot analog output — higher voltage = clearer water
 // Calibrate TURB_V_CLEAR to what the sensor reads in your clean water sample.
@@ -343,7 +343,6 @@ void pushToDashboard() {
     http.begin(client, API_ENDPOINT);
     http.setTimeout(6000); // Give SSL handshake enough time on mobile hotspots, but prevent permanent blocking
     http.addHeader("Content-Type", "application/json");
-    http.addHeader("Bypass-Tunnel-Reminder", "true"); // Skip localtunnel interstitial page
 
     // Build JSON Payload
     String payload = "{";
@@ -463,8 +462,13 @@ void setup() {
     
     if (WiFi.status() == WL_CONNECTED) {
       Serial.println(" OK!");
+      // Set DNS manually to override faulty mobile hotspot DNS configurations
+      IPAddress dns1(8, 8, 8, 8);
+      IPAddress dns2(8, 8, 4, 4);
+      WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, dns1, dns2);
       Serial.print("IP Address: ");
       Serial.println(WiFi.localIP());
+      Serial.println("Manually set Google DNS (8.8.8.8) to override hotspot DNS.");
     } else {
       // We continue execution standalone if WiFi fails.
       Serial.println(" FAILED (Running Offline)");

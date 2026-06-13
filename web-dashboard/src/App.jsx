@@ -160,10 +160,8 @@ function App() {
     const API_BASE = import.meta.env.VITE_API_URL || '';
     const poll = async () => {
       try {
-        // Fetch from the tunnel URL directly (bypasses localtunnel interstitial)
-        const response = await fetch(`${API_BASE}/api/status`, {
-          headers: { 'Bypass-Tunnel-Reminder': 'true' }
-        });
+        // Fetch from the Railway URL directly
+        const response = await fetch(`${API_BASE}/api/status`);
         if (!response.ok) throw new Error('API down');
         const res = await response.json();
 
