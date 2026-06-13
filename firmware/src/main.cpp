@@ -47,9 +47,7 @@
 const char* WIFI_SSID     = "ga14";
 const char* WIFI_PASSWORD = "meow123321";
 
-// Point directly at localtunnel (Vercel rewrites can't bypass localtunnel's interstitial page)
-// UPDATE THIS URL every time you restart localtunnel!
-const char* API_ENDPOINT  = "https://hackprixs3-watersafe-production.up.railway.app/api/ingest";
+const char* API_ENDPOINT  = "http://hackprixs3-watersafe-production.up.railway.app/api/ingest";
 
 // Turbidity: DFRobot analog output — higher voltage = clearer water
 // Calibrate TURB_V_CLEAR to what the sensor reads in your clean water sample.
@@ -337,11 +335,10 @@ void pushToDashboard() {
     return; // Fast return when running in offline mode to prevent brownouts
   }
   if (WiFi.status() == WL_CONNECTED) {
-    WiFiClientSecure client;
-    client.setInsecure(); // Bypass certificate validation to prevent crashes and save heap RAM
+    WiFiClient client;
     HTTPClient http;
     http.begin(client, API_ENDPOINT);
-    http.setTimeout(6000); // Give SSL handshake enough time on mobile hotspots, but prevent permanent blocking
+    http.setTimeout(3000); // Fast timeout for plain HTTP
     http.addHeader("Content-Type", "application/json");
 
     // Build JSON Payload
@@ -450,6 +447,12 @@ void setup() {
     display.display();
 
     WiFi.mode(WIFI_STA);
+    
+    // Set DNS manually before begin to override faulty mobile hotspot DNS configurations
+    IPAddress dns1(8, 8, 8, 8);
+    IPAddress dns2(8, 8, 4, 4);
+    WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, dns1, dns2);
+    
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     // Wait max 10 seconds for Wi-Fi connection
@@ -462,10 +465,6 @@ void setup() {
     
     if (WiFi.status() == WL_CONNECTED) {
       Serial.println(" OK!");
-      // Set DNS manually to override faulty mobile hotspot DNS configurations
-      IPAddress dns1(8, 8, 8, 8);
-      IPAddress dns2(8, 8, 4, 4);
-      WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, dns1, dns2);
       Serial.print("IP Address: ");
       Serial.println(WiFi.localIP());
       Serial.println("Manually set Google DNS (8.8.8.8) to override hotspot DNS.");
