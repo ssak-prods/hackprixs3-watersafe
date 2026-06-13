@@ -1,21 +1,22 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import { updateSMSState, getSMSState } from './sms.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Allow requests from any origin (Vercel frontend, ESP32, etc.)
 app.use(cors({
   origin: '*',
-  allowedHeaders: ['Content-Type', 'Bypass-Tunnel-Reminder']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
+// ─── Health Check ────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', service: 'WaterSafe Backend', uptime: process.uptime() });
+});
 
 // In-memory data store for the Hackathon Demo
 let latestData = {
@@ -123,18 +124,7 @@ app.post('/api/alerts/:id/ack', (req, res) => {
   }
 });
 
-// Serve the Vite React App in production
-app.use(express.static(join(__dirname, 'dist')));
-
-// Fallback all routes to index.html for React Router / PWA client side routing
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api')) {
-    return next();
-  }
-  res.sendFile(join(__dirname, 'dist', 'index.html'));
-});
-
 // Start Server
-app.listen(PORT, () => {
-  console.log(`WaterSafe V2 Server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🌊 WaterSafe Backend running on port ${PORT}`);
 });

@@ -24,6 +24,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include <Wire.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -41,18 +42,19 @@
 // ─── SENSOR CALIBRATION ──────────────────────────────────────────────────────
 #define TDS_KVALUE      0.5f
 
-// ─── CLOUD DASHBOARD (Railway) ───────────────────────────────────────────────
-#define ENABLE_WIFI       true    // WiFi enabled — ESP32 pushes data to Node.js server for SMS alerts
+// ─── CLOUD DASHBOARD (Vercel + Proxy) ─────────────────────────────────────────
+#define ENABLE_WIFI       true    // Wi-Fi enabled after isolating TensorFlowLite crashes
 const char* WIFI_SSID     = "ga14";
 const char* WIFI_PASSWORD = "meow123321";
 
-// Update this to your deployed railway app domain (e.g. https://watersafe.up.railway.app/api/ingest)
-const char* API_ENDPOINT  = "http://10.40.28.249:3000/api/ingest";
+// Point directly at localtunnel (Vercel rewrites can't bypass localtunnel's interstitial page)
+// UPDATE THIS URL every time you restart localtunnel!
+const char* API_ENDPOINT  = "https://fifty-states-tickle.loca.lt/api/ingest";
 
 // Turbidity: DFRobot analog output — higher voltage = clearer water
 // Calibrate TURB_V_CLEAR to what the sensor reads in your clean water sample.
 // Read the [V] column in Serial Monitor with clean water and set it here.
-#define TURB_V_CLEAR  2.90f   // ← Adjust if still off. Your clean water [V]
+#define TURB_V_CLEAR  2.55f   // ← Calibrated for your clean bottled waters (mean ~2.40-2.51V)
 #define TURB_V_MURKY  0.50f
 #define TURB_NTU_MAX  3000.0f
 
@@ -112,7 +114,7 @@ float voltageToNTU(float v) {
 }
 
 // ─── SENSOR RATE-OF-CHANGE GUARD ─────────────────────────────────────────────
-// Detects sudden voltage jumps (>40%) between consecutive readings.
+// Detects sudden voltage jumps (>40% and >0.10V absolute) between consecutive readings.
 // Real contamination changes gradually. A 40%+ jump in 3 seconds = loose wire,
 // air bubble, or sensor repositioning — NOT real water quality change.
 static float prev_tds_v  = -1.0f;
@@ -120,14 +122,30 @@ static float prev_turb_v = -1.0f;
 static bool  sensor_fault = false;
 #define VOLTAGE_JUMP_THRESHOLD 0.40f  // 40% change in 3s = hardware fault
 
-bool checkVoltageJump(float prev, float curr, const char* name) {
+static int tds_fault_streak = 0;
+static int turb_fault_streak = 0;
+
+bool checkVoltageJump(float prev, float curr, const char* name, int &streak) {
   if (prev < 0.01f) return false;  // First reading, no comparison possible
-  float change = fabsf(curr - prev) / prev;
+  float abs_diff = fabsf(curr - prev);
+  if (abs_diff < 0.10f) {          // Ignore tiny voltage fluctuations under 0.10V
+    streak = 0;
+    return false;
+  }
+  float change = abs_diff / prev;
   if (change > VOLTAGE_JUMP_THRESHOLD) {
-    Serial.printf("[SENSOR_FAULT] %s voltage jumped %.0f%% (%.3fV → %.3fV) — holding previous reading\n",
-                  name, change * 100.0f, prev, curr);
+    streak++;
+    if (streak >= 3) {
+      // If the jump persists for 3 consecutive cycles (9s), accept it as the new baseline
+      Serial.printf("[SENSOR_FAULT] %s voltage change persisted. Accepting new reading: %.3fV\n", name, curr);
+      streak = 0;
+      return false;
+    }
+    Serial.printf("[SENSOR_FAULT] %s voltage jumped %.0f%% (%.3fV → %.3fV) [streak %d/3] — holding previous reading\n",
+                  name, change * 100.0f, prev, curr, streak);
     return true;
   }
+  streak = 0;
   return false;
 }
 
@@ -149,9 +167,9 @@ void readSensors() {
   int16_t adc1 = ads.readADC_SingleEnded(1);
   float   v1   = adc1 * 0.1875f / 1000.0f;
 
-  // Rate-of-change guard: if either sensor voltage jumps >40%, hold previous values
-  bool tds_fault  = checkVoltageJump(prev_tds_v,  v0, "TDS");
-  bool turb_fault = checkVoltageJump(prev_turb_v, v1, "TURB");
+  // Rate-of-change guard: if either sensor voltage jumps >40% and >0.10V, hold previous values
+  bool tds_fault  = checkVoltageJump(prev_tds_v,  v0, "TDS", tds_fault_streak);
+  bool turb_fault = checkVoltageJump(prev_turb_v, v1, "TURB", turb_fault_streak);
   sensor_fault = tds_fault || turb_fault;
 
   if (!tds_fault) {
@@ -258,12 +276,8 @@ void updateDisplay() {
 
     } else {
       // ─ ALERT ─
-      const char* banner;
-      bool flash = false;
-      if      (ctx.alert_level == ALERT_CRITICAL)  { banner = "DANGER !!!"; flash = true; }
-      else if (ctx.alert_level == ALERT_WARNING)   { banner = "UNSAFE !! "; flash = true; }
-      else if (ctx.alert_level == ALERT_CAUTION)   { banner = "CAUTION ! "; flash = false; }
-      else                                          { banner = "UNCERTAIN "; flash = false; }
+      const char* banner = "DANGER !!!";
+      bool flash = true;
 
       drawAlertBanner(banner, flash, t);
 
@@ -299,11 +313,8 @@ void updateDisplay() {
 void logToSerial() {
   char buf[160];
   const char* verdict;
-  if      (ctx.alert_level == ALERT_NORMAL)    verdict = "[NORMAL]   ";
-  else if (ctx.alert_level == ALERT_UNCERTAIN) verdict = "[UNCERT]   ";
-  else if (ctx.alert_level == ALERT_CAUTION)   verdict = " CAUTION ! ";
-  else if (ctx.alert_level == ALERT_WARNING)   verdict = " WARNING !!";
-  else                                          verdict = " ALERT !!! ";
+  if (ctx.alert_level == ALERT_NORMAL) verdict = "[SAFE]     ";
+  else                                 verdict = "[UNSAFE]   ";
 
   snprintf(buf, sizeof(buf),
     "%5lu  |  %5.1fC  |  %4dppm [%.3fV]  |  %5dNTU [%.3fV]  |  MSE:%7.3f  |  %s  Conf:%3d%%  |  %s",
@@ -326,9 +337,13 @@ void pushToDashboard() {
     return; // Fast return when running in offline mode to prevent brownouts
   }
   if (WiFi.status() == WL_CONNECTED) {
+    WiFiClientSecure client;
+    client.setInsecure(); // Bypass certificate validation to prevent crashes and save heap RAM
     HTTPClient http;
-    http.begin(API_ENDPOINT);
+    http.begin(client, API_ENDPOINT);
+    http.setTimeout(6000); // Give SSL handshake enough time on mobile hotspots, but prevent permanent blocking
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("Bypass-Tunnel-Reminder", "true"); // Skip localtunnel interstitial page
 
     // Build JSON Payload
     String payload = "{";
@@ -501,7 +516,8 @@ void loop() {
       currentData.turbidity,
       currentData.temperature,
       ml_get_last_error(),
-      ml_get_anomaly_count()
+      ml_get_anomaly_count(),
+      sensor_fault
     );
 
     // FIX: Instant OLED reaction ONLY when escalating from NORMAL, to prevent skipping sensor displays forever.

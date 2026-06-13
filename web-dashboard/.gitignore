@@ -26,3 +26,4 @@ dist-ssr
 # Environment variables — NEVER commit this
 .env
 .vite/
+.vercel

@@ -41,6 +41,7 @@ struct ContextResult {
 // ─── PUBLIC API ───────────────────────────────────────────────────────────────
 void          context_setup();
 ContextResult context_evaluate(float tds, float turb, float temp,
-                                float mse,  int   anomaly_count);
+                                float mse,  int   anomaly_count,
+                                bool  sensor_fault);
 
 #endif // CONTEXT_LAYER_H
