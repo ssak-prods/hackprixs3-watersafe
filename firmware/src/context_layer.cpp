@@ -55,7 +55,11 @@ ContextResult context_evaluate(float tds, float turb, float temp,
     if (hist_count < TREND_WINDOW) hist_count++;
 
     // ── NORMAL SHORT-CIRCUIT ──────────────────────────────────────────────────
-    if (mse <= ANOMALY_THRESHOLD) {
+    // If MSE is below threshold, it's normal.
+    // ALSO: If water is demonstrably cleaner than the training baseline (TDS and Turbidity below mean),
+    // we force it to NORMAL. The autoencoder flags "too clean" water (like RO) as an anomaly simply
+    // because it deviates from normal tap water. We override it here because cleaner = safer.
+    if (mse <= ANOMALY_THRESHOLD || (tds <= SCALER_MEAN[0] && turb <= SCALER_MEAN[1] && temp < 35.0f)) {
         r.confidence  = 0;
         r.alert_level = ALERT_NORMAL;
         r.is_anomaly  = false;
@@ -73,13 +77,16 @@ ContextResult context_evaluate(float tds, float turb, float temp,
     if (severity > 1.0f) severity = 1.0f;
 
     // ── SIGNAL 2: Per-Sensor Z-Score Vote ────────────────────────────────────
-    float az_tds  = fabsf((tds  - SCALER_MEAN[0]) / SCALER_SCALE[0]);
-    float az_turb = fabsf((turb - SCALER_MEAN[1]) / SCALER_SCALE[1]);
-    float az_temp = fabsf((temp - SCALER_MEAN[2]) / SCALER_SCALE[2]);
+    // Use signed Z-scores for TDS and Turbidity: we only care if they go UP (contamination).
+    // A drop in TDS (e.g., using RO water) is completely safe.
+    float z_tds  = (tds  - SCALER_MEAN[0]) / SCALER_SCALE[0];
+    float z_turb = (turb - SCALER_MEAN[1]) / SCALER_SCALE[1];
+    float az_temp = fabsf((temp - SCALER_MEAN[2]) / SCALER_SCALE[2]); // Temp can be bad high or low
 
-    bool tds_f  = (az_tds  > 2.0f);
-    bool turb_f = (az_turb > 2.0f);
-    bool temp_f = (az_temp > 2.0f);
+    // Temperature threshold is high (4.0σ) to avoid ambient room temp triggering false flags.
+    bool tds_f  = (z_tds  > 2.0f);   // Positive spike only
+    bool turb_f = (z_turb > 2.0f);   // Positive spike only
+    bool temp_f = (az_temp > 4.0f);
     uint8_t votes = (uint8_t)((tds_f ? 1 : 0) + (turb_f ? 1 : 0) + (temp_f ? 1 : 0));
 
     r.votes = {tds_f, turb_f, temp_f, votes};
@@ -100,7 +107,8 @@ ContextResult context_evaluate(float tds, float turb, float temp,
     if      (tds_f && turb_f && temp_f) coherence = +0.20f; // All 3 = very credible
     else if (tds_f && turb_f)           coherence = +0.15f; // Classic contamination
     else if (tds_f && !turb_f)          coherence = +0.10f; // Dissolved ions (nitrates/metals)
-    else if (turb_f && !tds_f)          coherence = -0.15f; // Turbidity only → sensor fouling?
+    else if (turb_f && !tds_f && !temp_f) coherence = -0.15f; // Turbidity only → sensor fouling?
+    else if (turb_f && temp_f && !tds_f)  coherence = -0.20f; // Turb + temp without TDS → likely environmental, not chemical
     else if (temp_f && !tds_f && !turb_f) coherence = -0.10f; // Temp only → environmental
 
     // Location-based prior adjustments
@@ -120,12 +128,14 @@ ContextResult context_evaluate(float tds, float turb, float temp,
     if (conf > 1.0f) conf = 1.0f;
 
     r.confidence = (uint8_t)(conf * 100.0f);
-    r.is_anomaly = (r.confidence >= 30) && (anomaly_count >= 3);
+    r.is_anomaly = (r.confidence >= 55) && (anomaly_count >= 3);
 
     // ── ALERT LEVEL ───────────────────────────────────────────────────────────
-    if      (r.confidence < 30) r.alert_level = ALERT_UNCERTAIN;
-    else if (r.confidence < 60) r.alert_level = ALERT_CAUTION;
-    else if (r.confidence < 80) r.alert_level = ALERT_WARNING;
+    // Thresholds tuned: turbidity-only noise tops out ~65% conf.
+    // CAUTION starts at 55% so single-sensor noise stays in UNCERTAIN.
+    if      (r.confidence < 55) r.alert_level = ALERT_UNCERTAIN;
+    else if (r.confidence < 75) r.alert_level = ALERT_CAUTION;
+    else if (r.confidence < 90) r.alert_level = ALERT_WARNING;
     else                         r.alert_level = ALERT_CRITICAL;
 
     // ── REASON STRING (status screen) ────────────────────────────────────────

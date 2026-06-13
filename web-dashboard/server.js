@@ -1,7 +1,9 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { updateSMSState, getSMSState } from './sms.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -33,16 +35,19 @@ let alertsHistory = [];
  * ESP32 Hardware Endpoint
  * The ESP32 will POST JSON data here every 3 seconds
  */
-app.post('/api/ingest', (req, res) => {
+app.post('/api/ingest', async (req, res) => {
   const { tds, turbidity, temperature, confidence, alert_level, reason, is_anomaly } = req.body;
-  
+
   if (tds === undefined || turbidity === undefined) {
     return res.status(400).json({ error: 'Invalid payload' });
   }
 
+  // Respond to ESP32 immediately — don't block on SMS
+  res.status(200).json({ success: true });
+
   // Update latest state
-  const prevAnomaly = latestData.is_anomaly;
-  
+  const prevAlertLevel = latestData.alert_level ?? 0;
+
   latestData = {
     ...latestData,
     tds,
@@ -55,10 +60,10 @@ app.post('/api/ingest', (req, res) => {
     last_seen: Date.now()
   };
 
-  // Log history rarely to prevent mem leak in demo (every ~1 minute)
+  // Log history (sampled ~every 1 min to prevent mem leak in demo)
   if (Math.random() < 0.05) {
     historicalData.push({
-      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       tds,
       turbidity,
       isAnomaly: is_anomaly
@@ -66,21 +71,26 @@ app.post('/api/ingest', (req, res) => {
     if (historicalData.length > 50) historicalData.shift();
   }
 
-  // Trigger an alert if state transitioned to anomaly
-  if (is_anomaly && !prevAnomaly) {
+  // Only log to alert history on transitions TO WARNING or CRITICAL (alert_level >= 3).
+  // CAUTION and UNCERTAIN are informational — they don't create dashboard alerts.
+  if (alert_level >= 3 && prevAlertLevel < 3) {
     alertsHistory.unshift({
       id: Date.now(),
       time: new Date().toLocaleTimeString(),
-      severity: alert_level >= 3 ? 'high' : 'medium',
+      severity: alert_level >= 4 ? 'high' : 'medium',
       message: reason,
-      action: alert_level >= 3 ? "Stop using immediately. Call for help." : "Keep an eye on this parameter.",
+      action: alert_level >= 4 ? 'Stop using immediately. Call for help.' : 'Reduce use and monitor closely.',
       acknowledged: false
     });
     if (alertsHistory.length > 20) alertsHistory.pop();
   }
 
-  console.log(`[INGEST] Saved reading: TDS=${tds} Turb=${turbidity} Conf=${confidence}%`);
-  res.status(200).json({ success: true });
+  console.log(`[INGEST] TDS=${tds} Turb=${turbidity} Conf=${confidence}% Anomaly=${is_anomaly} SMSState=${getSMSState()}`);
+
+  // ── Software SMS State Machine ──────────────────────────────────────────
+  // Runs every reading. Handles 2-consecutive confirmation, 30-min re-alerts,
+  // and 2-consecutive safe confirmation before sending ALL CLEAR.
+  await updateSMSState(alert_level, reason);
 });
 
 /**
@@ -91,7 +101,8 @@ app.get('/api/status', (req, res) => {
   res.json({
     current: latestData,
     alerts: alertsHistory,
-    history: historicalData
+    history: historicalData,
+    smsState: getSMSState()  // Visible in dashboard: SAFE | WARN_PENDING | ALARMING | CLEAR_PENDING
   });
 });
 

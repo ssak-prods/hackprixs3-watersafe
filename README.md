@@ -1,67 +1,81 @@
-# WaterSafe V2: Industrial TinyML Water Quality Oracle
+# 💧 WaterSafe V2: The Smart Water Quality Oracle
 
-> [!NOTE]
-> **Executive Summary**: WaterSafe V2 is an affordable IoT monitoring system designed for early detection of industrial water contamination. By deploying a **TinyML Autoencoder** on an ESP32, the system shifts technical complexity from "expensive reagents" to "intelligent anomaly modeling." It achieves **90%+ detection accuracy** for industrial spills using only $25 of hardware.
+## 🌍 The Problem
+Clean drinking water is a human right, but industrial spills and contamination often go unnoticed until it's too late. Traditional lab testing is slow and expensive, while cheap electronic water sensors can't directly detect invisible toxins like heavy metals or pesticides. How do we protect communities in real-time without spending thousands of dollars on industrial-grade probes?
 
-[![Research Status](https://img.shields.io/badge/Research-IIT--Internship--Target-blue.svg)](https://github.com/ssak-prods/watersafeV2)
-[![Platform](https://img.shields.io/badge/Hardware-ESP32--WROOM-red.svg)](firmware/)
-[![ML Framework](https://img.shields.io/badge/ML-TensorFlow--Lite-orange.svg)](ml/)
+## Problem Deep-Dive:
+- 30M+ Indians fall sick annually from contaminated tap water
+- 11 deaths in 10 days (Indore, Jan 2026) — sewage in pipeline, detected too late
+- Detection delay: 2-3 days — contamination spreads faster every second
+- 26 cities across 22 states reported sewage-contaminated water outbreaks (2025 – 2026)
+- Existing water testing systems are expensive, or reactive and delayed
+- Existing solutions are not friendly for the rural population 
+- SOURCES: https://www.downtoearth.org.in/water/unsafe-water-year-round-over-5500-fell-sick-34-died-due-to-contaminated-tap-water-across-india-in-last-12-months | https://delhigreens.com/2019/03/22/an-infographic-on-the-drinking-water-challenge-in-india/ | https://www.ndtv.com/cities/11-deaths-in-10-days-in-indore-from-contaminated-water-3513211 
 
----
 
-## 🔬 Core Research Methodology
+## 🚀 The Solution
+WaterSafe V2 is an **ultra-affordable ($25) IoT early-warning system** that uses Edge AI to protect water supplies. 
 
-The central hypothesis of WaterSafe V2 is that **water contamination is a statistical outlier** in the natural electrochemical baseline of a water source. Instead of detecting specific chemicals (which requires industrial-grade probes), we model the "Latent Space of Potability."
+Instead of trying to identify specific invisible chemicals (which is impossible with cheap sensors), WaterSafe V2 learns the exact "fingerprint" of safe, normal water. If *anything* changes the water's electrochemical signature—such as a factory illegally dumping waste upstream—the AI instantly flags the water as anomalous. It also finds out what is specifically wrong with the water quality in terms of properties and possible causes.
 
-### The Anomaly Detection Math
-We use a symmetric **Bottleneck Autoencoder** trained exclusively on "Normal" water samples. The reconstruction loss $\mathcal{L}$ for an input vector $x = [TDS, Turbidity, Temp]$ is:
-
-$$\mathcal{L}(x, \hat{x}) = \frac{1}{n} \sum_{i=1}^{n} (x_i - \hat{x}_i)^2$$
-
-Where $\hat{x}$ is the output of our decoder $D(E(x))$. An anomaly is flagged when $\mathcal{L} > \tau_{95}$, where $\tau_{95}$ is the 95th percentile error threshold observed during baseline training.
-
----
-
-## 🏗️ System Architecture
-
-```mermaid
-graph TD
-    A[Raw Sensors] -->|Signal Conditioning| B[ESP32 Pre-processing]
-    B -->|EMA Filter| C[TinyML Inference Engine]
-    C{Is Anomaly?}
-    C -->|Yes: MSE > Threshold| D[OLED Alarm / Valve Shut]
-    C -->|No: MSE < Threshold| E[Baseline Data Logging]
-```
-
-### 🛰️ Strategic Roadmap: Closing the Chemical Gap
-Presently, low-cost sensors cannot detect Arsenic, Lead, or Pesticides directly. Our project addresses this through a **Hybrid Detection Model**:
-- **Immediate Future**: Integration of **Paper-Based Biosensors** (colorimetric detection) analyzed via ESP32-CAM optical sensors (inspired by IIT Jodhpur research).
-- **Global Context**: Correlating real-time sensor anomalies with regional groundwater contamination heatmaps (Context-Aware Risk Scoring).
+When contamination is detected, the system immediately:
+1. **Displays visual alerts** on a local OLED screen.
+2. **Updates a live React Web Dashboard** for remote monitoring.
+3. **Dispatches automated SMS warnings** via Twilio in multiple local languages (English, Hindi, Telugu) to community health officers.
 
 ---
 
-## 🚀 Reproduction & Deployment
+## 🧠 How It Works (Under the Hood)
+WaterSafe V2 smoothly bridges the gap between low-cost hardware and high-end chemistry by shifting the complexity from physical sensors to software.
 
-### 1. ML Pipeline (Python 3.8+)
-```bash
-pip install -r requirements.txt
-python ml/data_prep.py        # Prepare synthetic/real datasets
-python ml/train_autoencoder.py # Train & Export to ONNX/TFLite
-```
+### 1. The TinyML Autoencoder
+We deploy a Neural Network Autoencoder directly onto an ESP32 microcontroller. The network is trained exclusively on baseline data (`[TDS, Turbidity, Temperature]`) from safe tap water.
+* **The Math:** The model compresses the sensor data into a "Latent Space of Potability" and attempts to reconstruct it. If toxic runoff enters the water supply, it alters the physical properties in subtle, nonlinear ways. The autoencoder fails to reconstruct this foreign signature, generating a high **Mean Squared Error (MSE)**.
 
-### 2. Embedded Firmware (PlatformIO)
+### 2. The Context-Aware Rule Engine
+Pure AI is notoriously prone to false alarms (for example, the AI might flag highly purified RO water as an "anomaly" simply because it has never seen water *that* clean). To fix this, we wrote a deterministic **C++ Context Engine** that acts as a sanity check:
+* It analyzes the Neural Network's MSE alongside individual sensor Z-scores.
+* It applies physics-based logic: *If TDS spikes but Turbidity is flat, it's a dissolved ion spike. If both drop below the baseline, the water is just purer than normal.*
+* It calculates a final Confidence Score (0-100%) to determine the severity of the alert.
+
+### 3. The 4-State Alert Machine
+To prevent spamming users with SMS alerts due to temporary sensor bubbles, the Node.js backend manages a rigid 4-state machine (`Safe` → `Warn Pending` → `Alarming` → `Clear Pending`). It requires **3 consecutive anomalous readings** to trigger an SMS, and **3 consecutive safe readings** to send an "All Clear".
+
+---
+
+## 🛠️ Hardware Stack
+* **Compute:** ESP32-WROOM-32
+* **Sensors:** DFRobot TDS, DFRobot Turbidity, DS18B20 Temperature
+* **ADC:** ADS1115 (16-bit I2C for high-resolution analog reads)
+* **UI:** 0.96" OLED Display
+
+---
+
+## 🚀 Quick Start Guide
+
+### 1. Flash the ESP32 Firmware
+The embedded firmware is built using PlatformIO (C++).
 ```bash
 cd firmware
 pio run --target upload
 ```
 
----
+### 2. Start the Backend & Web Dashboard
+The Node.js server ingests ESP32 data, serves the React dashboard, and handles Twilio SMS.
+```bash
+cd web-dashboard
+npm install
+cp .env.example .env  # Add your Twilio credentials here
+npm run dev
+```
 
-## 📂 Modular Structure
-- **[firmware/](firmware/)**: C++ Real-time inference engine and hardware drivers.
-- **[ml/](ml/)**: Autoencoder training scripts, quantization pipeline, and exported models.
-- **[hardware/](hardware/)**: BOM, pin-mapping, and mechanical enclosure specifications.
-- **[3d-viewer/](3d-viewer/)**: Vite-based digital twin for real-time hardware visualization.
+### 3. Train Your Own Baseline
+If you are deploying WaterSafe V2 to a new region, you can retrain the autoencoder on the local water baseline using the provided Python scripts.
+```bash
+cd ml
+pip install -r requirements.txt
+python train_autoencoder.py
+```
 
 ---
-**Author**: [Your Name] | 6th Sem B.Tech CSE | Top 5% NPTEL AI
+*Built to bring affordable, robust, and intelligent water safety monitoring to the communities that need it most.*

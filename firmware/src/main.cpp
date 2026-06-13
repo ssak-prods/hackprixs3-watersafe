@@ -42,12 +42,12 @@
 #define TDS_KVALUE      0.5f
 
 // ─── CLOUD DASHBOARD (Railway) ───────────────────────────────────────────────
-#define ENABLE_WIFI       false   // Set to true to enable cloud logging, false for 100% stable offline mode
+#define ENABLE_WIFI       true    // WiFi enabled — ESP32 pushes data to Node.js server for SMS alerts
 const char* WIFI_SSID     = "ga14";
 const char* WIFI_PASSWORD = "meow123321";
 
 // Update this to your deployed railway app domain (e.g. https://watersafe.up.railway.app/api/ingest)
-const char* API_ENDPOINT  = "http://192.168.190.249:3000/api/ingest";
+const char* API_ENDPOINT  = "http://10.40.28.249:3000/api/ingest";
 
 // Turbidity: DFRobot analog output — higher voltage = clearer water
 // Calibrate TURB_V_CLEAR to what the sensor reads in your clean water sample.
@@ -63,7 +63,7 @@ Adafruit_ADS1115    ads;
 Adafruit_SSD1306    display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // ─── PHYSICAL CELLULAR SMS CONFIGURATION ──────────────────────────────────────
-#define ENABLE_CELLULAR_SMS  true   // Set to true to enable direct physical SIM800L/SIM7600 alerts
+#define ENABLE_CELLULAR_SMS  false  // Hardware GSM disabled — using Twilio software SMS via Node.js server instead
 #define GSM_RX_PIN           16
 #define GSM_TX_PIN           17
 HardwareSerial gsmSerial(2);        // Use ESP32 UART2 for cell communication
@@ -111,6 +111,26 @@ float voltageToNTU(float v) {
   return TURB_NTU_MAX - (ratio * TURB_NTU_MAX);
 }
 
+// ─── SENSOR RATE-OF-CHANGE GUARD ─────────────────────────────────────────────
+// Detects sudden voltage jumps (>40%) between consecutive readings.
+// Real contamination changes gradually. A 40%+ jump in 3 seconds = loose wire,
+// air bubble, or sensor repositioning — NOT real water quality change.
+static float prev_tds_v  = -1.0f;
+static float prev_turb_v = -1.0f;
+static bool  sensor_fault = false;
+#define VOLTAGE_JUMP_THRESHOLD 0.40f  // 40% change in 3s = hardware fault
+
+bool checkVoltageJump(float prev, float curr, const char* name) {
+  if (prev < 0.01f) return false;  // First reading, no comparison possible
+  float change = fabsf(curr - prev) / prev;
+  if (change > VOLTAGE_JUMP_THRESHOLD) {
+    Serial.printf("[SENSOR_FAULT] %s voltage jumped %.0f%% (%.3fV → %.3fV) — holding previous reading\n",
+                  name, change * 100.0f, prev, curr);
+    return true;
+  }
+  return false;
+}
+
 // ─── SENSOR READ ─────────────────────────────────────────────────────────────
 void readSensors() {
   tempSensor.requestTemperatures();
@@ -125,13 +145,28 @@ void readSensors() {
 
   int16_t adc0 = ads.readADC_SingleEnded(0);
   float   v0   = adc0 * 0.1875f / 1000.0f;
-  currentData.tds_voltage = v0;
-  currentData.tds = voltageToTDS(v0, currentData.temperature);
 
   int16_t adc1 = ads.readADC_SingleEnded(1);
   float   v1   = adc1 * 0.1875f / 1000.0f;
-  currentData.turb_voltage = v1;
-  currentData.turbidity    = voltageToNTU(v1);
+
+  // Rate-of-change guard: if either sensor voltage jumps >40%, hold previous values
+  bool tds_fault  = checkVoltageJump(prev_tds_v,  v0, "TDS");
+  bool turb_fault = checkVoltageJump(prev_turb_v, v1, "TURB");
+  sensor_fault = tds_fault || turb_fault;
+
+  if (!tds_fault) {
+    currentData.tds_voltage = v0;
+    currentData.tds = voltageToTDS(v0, currentData.temperature);
+    prev_tds_v = v0;
+  }
+  // else: keep currentData.tds and tds_voltage from previous reading
+
+  if (!turb_fault) {
+    currentData.turb_voltage = v1;
+    currentData.turbidity    = voltageToNTU(v1);
+    prev_turb_v = v1;
+  }
+  // else: keep currentData.turbidity and turb_voltage from previous reading
 
   currentData.timestamp = millis();
 }

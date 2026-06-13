@@ -21,6 +21,8 @@ SESSION_CONTEXT_REMINDER.md
 BackdatingContext.md
 .conflux
 learning/
+archive/
+.cursor/
 
 # PlatformIO & Build Artifacts
 .pio/
